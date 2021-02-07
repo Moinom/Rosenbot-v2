@@ -7,18 +7,17 @@ client.on('ready', () => {
 
 	const stream_channel = client.channels.cache.get(config.streamChannelID);
 	var all_streamers = config.streamerNames;
-
 	function streamerLoop(){
 		Object.keys(all_streamers).forEach(key => pingTwitch(key, all_streamers[key]));
 	}
 
 	function pingTwitch(streamer, isOnline){
-
+		
 		// getting OAuth client credentials
 		fetch(config.oAuthLink, {method: 'POST'})
+			
 			.then(res => res.json())
 			.then(res => {
-
 				// getting oAuth token
 			    var token = res.access_token;
 
@@ -35,16 +34,21 @@ client.on('ready', () => {
 				fetch('https://api.twitch.tv/helix/search/channels?query='+ streamer, auth)
 					.then(res => res.json())
 					.then(pull => {
-
-						var status = pull.data[0].is_live; 
-						var logo = pull.data[0].thumbnail_url;
-						var title = pull.data[0].title;
-						console.log(pull.data)
+						var data;
+						for (let i in pull.data){
+							if (pull.data[i].broadcaster_login == streamer.toLowerCase()){
+								data = pull.data[i];
+							}
+						}
+						var status = data.is_live; 
+						var logo = data.thumbnail_url;
+						var title = data.title;
+						console.log(data)
 
 						// only run when online and not already announced
 						if ((status != isOnline) && (status)){
 							all_streamers[streamer] = true;
-							//announcer(streamer,title,logo)
+							announcer(streamer,title,logo)
 
 						// mark as offline after stream ended
 						} else if (!status && isOnline){
@@ -57,7 +61,7 @@ client.on('ready', () => {
 	function announcer(streamer,title,logo){
 
 		stream_channel.send({
-			content: "@here Attention, attention! Stream alert! :alarm_clock:",
+			content: "Attention, attention! Stream alert! :alarm_clock:",
 			embed: {
 			    color: 3447003,
 			    author: {
