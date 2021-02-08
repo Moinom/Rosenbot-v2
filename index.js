@@ -40,40 +40,83 @@ client.on('ready', () => {
 								data = pull.data[i];
 							}
 						}
-						var status = data.is_live; 
-						var logo = data.thumbnail_url;
-						var title = data.title;
-						console.log(data)
-
-						// only run when online and not already announced
-						if ((status != isOnline) && (status)){
-							all_streamers[streamer] = true;
-							announcer(streamer,title,logo)
-
-						// mark as offline after stream ended
-						} else if (!status && isOnline){
-							all_streamers[streamer] = false;
+						
+						if (data != null){
+							getStreamData(data, isOnline, streamer)
 						}
 				})
 			})
 	}
+	
+	function getStreamData(_streamData, _isOnline, _streamer){
+		
+		var status = _streamData.is_live; 
+		var logo = _streamData.thumbnail_url;
+		var title = _streamData.title;
+		//var gameID = _streamData.game_id;
+		//var game = getGame(gameID);
+		console.log(_streamData)
 
-	function announcer(streamer,title,logo){
+		// only run when online and not already announced
+		if ((status != _isOnline) && (status)){
+			
+			all_streamers[_streamer] = true;
+			announcer(_streamer, title, logo);
+
+		// mark as offline after stream ended
+		} else if (!status && _isOnline){
+			all_streamers[_streamer] = false;
+		}		
+	}
+	
+	/*
+	function getGame(_gameID){
+		var requestString = "https://api.twitch.tv/helix/games?id=" + _gameID;
+		var game;
+		
+		fetch(config.oAuthLink, {method: 'POST'})
+			
+			.then(res => res.json())
+			.then(res => {
+				// getting oAuth token
+			    var token = res.access_token;
+
+			    // authorisation info
+			    var auth = {  
+					method: 'GET',
+					headers: { 
+						'client-id': config.oAuthClientID, 
+						'Authorization': 'Bearer ' + token
+					} 
+				}
+
+				// fetch streamer channel
+				fetch(requestString, auth)
+					.then(res => res.json())
+					.then(pull => {
+						game = pull.data[0].name;
+						//console.log(game)
+						return game
+				})
+			})	
+	} */
+	
+	function announcer(_streamer, _title, _logo){
 
 		stream_channel.send({
 			content: "Attention, attention! Stream alert! :alarm_clock:",
 			embed: {
 			    color: 3447003,
 			    author: {
-			      name: streamer,
-			      icon_url: logo
+			      name: _streamer,
+			      icon_url: _logo
 			    },
-			    title: streamer + " is now streaming! Go and watch the stream!",
+			    title: _streamer + " is now streaming! Go and watch the stream!",
 			    thumbnail: {
-						url: logo
+						url: _logo
 					},
-			    url: 'https://www.twitch.tv/' + streamer,
-			    description: title		    
+			    url: 'https://www.twitch.tv/' + _streamer,
+			    description: _title		    
 		    }
 		});		
 	}
