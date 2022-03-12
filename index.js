@@ -16,6 +16,25 @@ DISCORD_CLIENT.on('ready', () => {
 	function streamerLoop() {
 		Object.keys(allStreamers).forEach(key => findStreamer(key, allStreamers[key]));
 	}
+
+	
+	// find streamer profile from Twitch API
+	async function findStreamer(streamer, wasAnnounced) {
+
+		const url = `https://api.twitch.tv/helix/search/channels?query=${streamer}`;
+		const streamObj = await apiCall(url);
+		
+		
+		for (let i in streamObj.data) {
+
+			let streamData = streamObj.data[i];
+			if (streamData && streamData.broadcaster_login == streamer.toLowerCase()) {
+				console.log(streamData);
+				checkStream(streamData, wasAnnounced, streamer);
+				return;
+			}
+		}
+	}
 	
 
 	// collect stream info, starts announcer if stream is live
@@ -38,25 +57,6 @@ DISCORD_CLIENT.on('ready', () => {
 		}		
 	}
 
-	
-	// find streamer profile from Twitch API
-	async function findStreamer(streamer, wasAnnounced) {
-
-		const url = `https://api.twitch.tv/helix/search/channels?query=${streamer}`;
-		const streamObj = await apiCall(url);
-		
-		
-		for (let i in streamObj.data) {
-
-			let streamData = streamObj.data[i];
-			if (streamData && streamData.broadcaster_login == streamer.toLowerCase()) {
-				console.log(streamData);
-				checkStream(streamData, wasAnnounced, streamer);
-				return;
-			}
-		}
-	}
-	
 
 	// find out game name
 	async function getGame(gameId) {
@@ -71,16 +71,6 @@ DISCORD_CLIENT.on('ready', () => {
 			}
 		}
 		return "game name not found";
-	}
-	
-
-	// generate auth token for API call
-	async function getAuthToken() {
-
-		const authResponse = await FETCH(CONFIG.oAuthLink, {method: 'POST'});
-		const authResJson = await authResponse.json();
-
-		return await authResJson.access_token;;
 	}
 
 
@@ -102,13 +92,24 @@ DISCORD_CLIENT.on('ready', () => {
 	}
 	
 
+	// generate auth token for API call
+	async function getAuthToken() {
+
+		const authResponse = await FETCH(CONFIG.oAuthLink, {method: 'POST'});
+		const authResJson = await authResponse.json();
+
+		return await authResJson.access_token;;
+	}
+
+
 	// announce in discord
 	function announceStream(streamer, title, logo, gameName) {
 
+		const lightBlue = 3447003;
 		streamChannel.send({
 			content: "Attention, attention! Stream alert! :alarm_clock:",
 			embed: {
-			    color: 3447003,
+			    color: lightBlue,
 			    author: {
 			      name: streamer,
 			      icon_url: logo
