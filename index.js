@@ -1,123 +1,129 @@
-const Discord = require('discord.js');
-const client = new Discord.Client();
-const fetch = require('node-fetch');
-const config = require("./config.json");
+const DISCORD = require('discord.js');
+const DISCORD_CLIENT = new DISCORD.Client();
+const FETCH = require('node-fetch');
+const CONFIG = require("./config.json");
 
-client.on('ready', () => {
 
-	const stream_channel = client.channels.cache.get(config.streamChannelID);
-	var all_streamers = config.streamerNames;
+
+DISCORD_CLIENT.on('ready', () => {
+
+
+	const streamChannel = DISCORD_CLIENT.channels.cache.get(CONFIG.streamChannelId);
+	let allStreamers = CONFIG.streamerNames;
 	
+
 	// loop through all the streamers in config and check their profiles
-	function streamerLoop(){
-		Object.keys(all_streamers).forEach(key => findStreamer(key, all_streamers[key]));
+	function streamerLoop() {
+		Object.keys(allStreamers).forEach(key => findStreamer(key, allStreamers[key]));
 	}
 	
+
 	// collect stream info, starts announcer if stream is live
-	async function checkStream(_streamData, _isOnline, _streamer){
+	async function checkStream(streamData, wasAnnounced, streamer) {
 		
-		var status = _streamData.is_live; 
-		var logo = _streamData.thumbnail_url;
-		var title = _streamData.title;
-		var gameID = _streamData.game_id;
-		var game = await getGame(gameID).catch(e => { console.log(e) });
+		let isLive = streamData.is_live; 
+		let logo = streamData.thumbnail_url;
+		let title = streamData.title;
+		let gameId = streamData.game_id;
+		let gameName = await getGame(gameId).catch(e => { console.log(e) });
 
 		// only run when online and not already announced
-		if ((status != _isOnline) && (status)){
-			
-			all_streamers[_streamer] = true;
-			announcer(_streamer, title, logo, game);
+		if (isLive && !wasAnnounced) {
+			allStreamers[streamer] = true;
+			announceStream(streamer, title, logo, gameName);
 
 		// mark as offline after stream ended
-		} else if (!status && _isOnline){
-			all_streamers[_streamer] = false;
+		} else if (!isLive && wasAnnounced) {
+			allStreamers[streamer] = false;
 		}		
 	}
-	
-	// find streamer profile from API
-	async function findStreamer(_streamer, _isOnline) {
 
-		const url = 'https://api.twitch.tv/helix/search/channels?query=' + _streamer;
-		const streamObj = await apiCall(url)
+	
+	// find streamer profile from Twitch API
+	async function findStreamer(streamer, wasAnnounced) {
+
+		const url = `https://api.twitch.tv/helix/search/channels?query=${streamer}`;
+		const streamObj = await apiCall(url);
 		
-		var data;
-		for (let i in streamObj.data){
-			if (streamObj.data[i].broadcaster_login == _streamer.toLowerCase()){
+		let data;
+		for (let i in streamObj.data) {
+			if (streamObj.data[i].broadcaster_login == streamer.toLowerCase()) {
 				data = streamObj.data[i];
-				console.log(data)
+				console.log(data);
 			}
 		}
-		if (data != null){
-			checkStream(data, _isOnline, _streamer)
+		if (data) {
+			checkStream(data, wasAnnounced, streamer);
 		}
 	}
 	
+
 	// find out game name
-	async function getGame(_gameID){
+	async function getGame(gameId) {
 		
-		const url = "https://api.twitch.tv/helix/games?id=" + _gameID;
+		const url = `https://api.twitch.tv/helix/games?id=${gameId}`;
 		const gameObj = await apiCall(url);
 		
-		var game = "";
-		
-		if (gameObj != null && gameObj != 0){
-			game = gameObj.data[0].name;
+		if (gameObj && gameObj.data[0]) {
+			let foundName = gameObj.data[0].name;
+			if (foundName) {
+				return foundName;
+			}
 		}
-		return game
+		return "game name not found";
 	}
 	
+
 	// generate auth token for API call
-	async function getAuthToken(){
+	async function getAuthToken() {
 
-		const authResponse = await fetch(config.oAuthLink, {method: 'POST'});
+		const authResponse = await FETCH(CONFIG.oAuthLink, {method: 'POST'});
 		const authResJson = await authResponse.json();
-		var token = await authResJson.access_token;
 
-		return token
+		return await authResJson.access_token;;
 	}
+
 
 	// get json object from API
-	async function apiCall(_url){
+	async function apiCall(url) {
 
 		const token = await getAuthToken();
-		var auth = {  
+		let params = {  
 			method: 'GET',
 			headers: { 
-				'client-id': config.oAuthClientID, 
-				'Authorization': 'Bearer ' + token
+				'client-id': CONFIG.oAuthClientId, 
+				'Authorization': `Bearer ${token}`
 				} 
-			}
-		const response = await fetch(_url, auth);
-		const obj = await response.json();
+			};
+		let response = await FETCH(url, params);
+		let obj = await response.json();
 
-		return obj	
+		return obj;
 	}
 	
-	// announce in discord
-	function announcer(_streamer, _title, _logo, _game){
-		
-		if (_game != null){
-			_game = " " + _game;
-		}
 
-		stream_channel.send({
+	// announce in discord
+	function announceStream(streamer, title, logo, gameName) {
+
+		streamChannel.send({
 			content: "Attention, attention! Stream alert! :alarm_clock:",
 			embed: {
 			    color: 3447003,
 			    author: {
-			      name: _streamer,
-			      icon_url: _logo
+			      name: streamer,
+			      icon_url: logo
 			    },
-			    title: _streamer + " is now streaming"+ _game +"! Go and watch the stream!",
+			    title: `${streamer} is now streaming ${gameName}! Go and watch the stream!`,
 			    thumbnail: {
-						url: _logo
+						url: logo
 					},
-			    url: 'https://www.twitch.tv/' + _streamer,
-			    description: _title		    
+			    url: `https://www.twitch.tv/${streamer}`,
+			    description: title		    
 		    }
-		});		
+		});	
 	}
+
 	setInterval(streamerLoop, 30000);
 });
 
-client.login(config.token);
+DISCORD_CLIENT.login(CONFIG.discordToken);
