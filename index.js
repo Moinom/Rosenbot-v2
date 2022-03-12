@@ -45,15 +45,15 @@ DISCORD_CLIENT.on('ready', () => {
 		const url = `https://api.twitch.tv/helix/search/channels?query=${streamer}`;
 		const streamObj = await apiCall(url);
 		
-		let data;
+		
 		for (let i in streamObj.data) {
-			if (streamObj.data[i].broadcaster_login == streamer.toLowerCase()) {
-				data = streamObj.data[i];
-				console.log(data);
+
+			let streamData = streamObj.data[i];
+			if (streamData && streamData.broadcaster_login == streamer.toLowerCase()) {
+				console.log(streamData);
+				checkStream(streamData, wasAnnounced, streamer);
+				return;
 			}
-		}
-		if (data) {
-			checkStream(data, wasAnnounced, streamer);
 		}
 	}
 	
