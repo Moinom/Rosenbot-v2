@@ -22,7 +22,7 @@ DISCORD_CLIENT.on('ready', () => {
 	async function findStreamer(streamer, wasAnnounced) {
 
 		const url = `https://api.twitch.tv/helix/search/channels?query=${streamer}`;
-		const streamObj = await apiCall(url);
+		const streamObj = await apiCall(url).catch(e => { console.log(e) });;
 		
 		
 		for (let i in streamObj.data) {
@@ -62,7 +62,7 @@ DISCORD_CLIENT.on('ready', () => {
 	async function getGame(gameId) {
 		
 		const url = `https://api.twitch.tv/helix/games?id=${gameId}`;
-		const gameObj = await apiCall(url);
+		const gameObj = await apiCall(url).catch(e => { console.log(e) });;
 		
 		if (gameObj && gameObj.data[0]) {
 			let foundName = gameObj.data[0].name;
@@ -77,7 +77,7 @@ DISCORD_CLIENT.on('ready', () => {
 	// get json object from API
 	async function apiCall(url) {
 
-		const token = await getAuthToken();
+		const token = await getAuthToken().catch(e => { console.log(e) });;
 		let params = {  
 			method: 'GET',
 			headers: { 
@@ -85,7 +85,7 @@ DISCORD_CLIENT.on('ready', () => {
 				'Authorization': `Bearer ${token}`
 				} 
 			};
-		let response = await FETCH(url, params);
+		let response = await FETCH(url, params).catch(e => { console.log(e) });;
 		let obj = await response.json();
 
 		return obj;
@@ -95,7 +95,7 @@ DISCORD_CLIENT.on('ready', () => {
 	// generate auth token for API call
 	async function getAuthToken() {
 
-		const authResponse = await FETCH(CONFIG.oAuthLink, {method: 'POST'});
+		const authResponse = await FETCH(CONFIG.oAuthLink, {method: 'POST'}).catch(e => { console.log(e) });;
 		const authResJson = await authResponse.json();
 
 		return await authResJson.access_token;;
