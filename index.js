@@ -1,5 +1,5 @@
 const DISCORD = require('discord.js');
-const DISCORD_CLIENT = new DISCORD.Client();
+const DISCORD_CLIENT = new DISCORD.Client({ intents: ["GUILDS", "GUILD_MESSAGES"] });
 const FETCH = require('node-fetch');
 const CONFIG = require("./config.json");
 
