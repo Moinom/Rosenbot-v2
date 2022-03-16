@@ -24,12 +24,14 @@ DISCORD_CLIENT.on('ready', () => {
 		const url = `https://api.twitch.tv/helix/search/channels?query=${streamer}`;
 		const streamObj = await apiCall(url).catch(e => { console.log(e) });;
 		
+		if (!streamObj) {
+			return;
+		}
 		
 		for (let i in streamObj.data) {
 
 			let streamData = streamObj.data[i];
 			if (streamData && streamData.broadcaster_login == streamer.toLowerCase()) {
-				console.log(streamData);
 				checkStream(streamData, wasAnnounced, streamer);
 				return;
 			}
@@ -49,6 +51,7 @@ DISCORD_CLIENT.on('ready', () => {
 		// only run when online and not already announced
 		if (isLive && !wasAnnounced) {
 			allStreamers[streamer] = true;
+			console.log(`${Date.now}: announcing ${streamer}, playing ${gameName}`);
 			announceStream(streamer, title, logo, gameName);
 
 		// mark as offline after stream ended
@@ -108,7 +111,7 @@ DISCORD_CLIENT.on('ready', () => {
 		const lightBlue = 3447003;
 		streamChannel.send({
 			content: "Attention, attention! Stream alert! :alarm_clock:",
-			embed: {
+			embeds: [{
 			    color: lightBlue,
 			    author: {
 			      name: streamer,
@@ -120,7 +123,7 @@ DISCORD_CLIENT.on('ready', () => {
 					},
 			    url: `https://www.twitch.tv/${streamer}`,
 			    description: title		    
-		    }
+		    }]
 		});	
 	}
 
