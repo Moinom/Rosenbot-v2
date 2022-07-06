@@ -9,7 +9,7 @@ More info [here](https://dev.twitch.tv/docs/authentication).
 
 ## Install your Discord bot
 First clone this repository, then you'll also need to create a config file which will hold the names of the Twitch streamers you want to announce in your Discord server, the channel ID you want to post in, your bot's token and Twitch's oAuth token and link.
-An example condig.json would look like this:
+An example config.json would look like this:
 ```
 {
   "streamChannelId": 123456789,
@@ -26,5 +26,5 @@ An example condig.json would look like this:
 Start the bot by running the index.js via node or deploy it via Docker.
 
 ## Host your Discord bot
-At the moment your bot will only run while the script is running on your device. So it will turn of once you turn off your device. 
+Following above instructions your bot will only run while the script is running on your device. So it will turn off once you turn off your device. 
 You will want to either run it via one of the many hosting services the internet has to offer, or on your own server (I only run it for my friends, so I just have it running on a Raspberry Pi.)
