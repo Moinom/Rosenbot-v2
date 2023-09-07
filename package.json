@@ -2,11 +2,11 @@
   "name": "rosenbot-v2",
   "version": "1.0.0",
   "description": "Discord bot that announces streams by selected streamers.",
-  "main": "index.js",
-  "type": "module",
+  "main": "build/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "build": "rm -rf ./build && tsc",
+    "start": "npm run build && node build/index.js"
   },
   "repository": {
     "type": "git",
@@ -26,7 +26,10 @@
   },
   "homepage": "https://github.com/Moinom/Rosenbot-v2#readme",
   "dependencies": {
-    "discord.js": "14.13.0",
-    "node-fetch": "3.3.2"
+    "discord.js": "14.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.9",
+    "typescript": "5.2.2"
   }
 }
