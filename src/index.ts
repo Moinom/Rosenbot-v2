@@ -1,49 +1,10 @@
 import { ChannelType, Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import CONFIG from './config.json';
+import { Streamers, Game, Stream, StreamData, TwitchTokenResponse } from './type_definitions';
 
 const DISCORD_CLIENT = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
-
-interface Streamers {
-  [key: string]: boolean;
-}
-
-interface Stream {
-  data: StreamData[];
-  pagination: { cursor: string };
-}
-
-interface StreamData {
-  broadcaster_language: string;
-  broadcaster_login: string;
-  display_name: string;
-  game_id: string;
-  game_name: string;
-  id: string;
-  is_live: boolean;
-  tag_ids: string[];
-  tags: string[];
-  thumbnail_url: string;
-  title: string;
-  started_at: string;
-}
-
-interface Game {
-  data: GameData[];
-  pagination: { cursor: string };
-}
-
-interface GameData {
-  id: string;
-  name: string;
-  box_art_url: string;
-  igdb_id: string;
-}
-
-interface TwitchTokenResponse {
-  access_token: string;
-}
 
 DISCORD_CLIENT.on('ready', () => {
   const streamChannel = DISCORD_CLIENT.channels.cache.get(
