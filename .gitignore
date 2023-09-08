@@ -1,5 +1,6 @@
 # Sensitive data
 config.json
+streamers.json
 .env
 
 # Build folder
