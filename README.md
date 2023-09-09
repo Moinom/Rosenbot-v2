@@ -20,6 +20,7 @@ Create a file named `.env`. This file will hold secret and confidential Twitch a
 The Twitch client ID and secret you receive when setting up your Twitch authentication. The webhook secret is a token that you make up yourself, to identify yourself with Twitch. It can be anything but it is recommended to use a secure key. The Discord token you receive when creating the bot. \
 The Discord channel ID you get when right clicking on the channel you want to send your announcements to, in your Discord app. Developer mode in your Discord settings must be enabled for this option. \
 Your server will be listening for Twitch events on the port you specify. If not specified it will default to 3000. \
+This bot uses a MySQL database. To connect to the DB, enter the data that you reveived when setting up the DB server. \
 The file should look like this (replace the values in the quotation marks):
 
 ```
@@ -30,11 +31,15 @@ TWITCH_CALLBACK_URL="url-that-twitch-uses-to-send-you-events"
 DISCORD_TOKEN="super-secret-discord-token"
 DISCORD_CHANNEL_ID="id-of-the-channel-the-bot-should-post-in"
 PORT="8080"
+DB_HOST='localhost'
+DB_USER='db-user'
+DB_PASSWORD='super-secret-database-password'
+DB_NAME='rosenbot-db'
 ```
 
 ### Configure streamers
 
-Create a `streamer.json` file which will hold the names of the Twitch streamers you want to announce in your Discord server.\
+I plan to move this data to a database in future, so this is just a temporary workaround. Create a `streamer.json` file which will hold the names of the Twitch streamers you want to announce in your Discord server.\
 An example streamers.json would look like this:
 
 ```
