@@ -73,7 +73,7 @@ async function createSubscription(userId: string) {
   console.log('Create sub status: ', response?.status)
 }
 
-// Request Ids matching streamer names
+// Request data matching streamer names
 // TODO: pagination
 export async function getStreamerInfo() {
   const tempStreamers: Streamers = savedStreamers;
@@ -95,6 +95,17 @@ export async function getStreamerInfo() {
     });
   }
   return tempStreamers;
+}
+
+// Request ID of a single streamer
+export async function requestStreamerId(name: string) {
+  const response = await callTwitchApi(`search/channels?query=${name}`, 'GET');
+  let channels: Channels = await response?.json();
+  for (let channel of channels.data) {
+    if (channel.display_name.toLowerCase() === name.toLowerCase()) {
+      return channel.id;
+    }
+  }
 }
 
 // Generic function for all calls to Twitch API
