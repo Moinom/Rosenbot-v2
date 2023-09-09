@@ -16,10 +16,15 @@ db_connection.connect();
 
 export async function createStreamer(name: string) {
   const streamerId = await requestStreamerId(name);
+  if (!streamerId) return false;
   const queryString = `INSERT INTO streamers (id, name, twitch_id) VALUES ("${crypto.randomUUID()}", "${name}", "${streamerId}")`;
   db_connection.query(queryString, (error) => {
-    error && console.error(error);
+    if (error) {
+      console.error(error);
+      return false;
+    }
   });
+  return true;
 }
 
 export function deleteStreamer(name: string) {
