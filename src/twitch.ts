@@ -51,14 +51,14 @@ export async function removeInvalidSubs() {
 }
 
 // Request all subscriptions made with this app
-async function getSubscriptions(query?: string) {
-  const response = await callTwitchApi('eventsub/subscriptions', 'GET');
+export async function getSubscriptions(query?: string) {
+  const response = await callTwitchApi(query ? `eventsub/subscriptions?${query}` :'eventsub/subscriptions', 'GET');
   const subscriptions: TwitchSubscriptions = await response?.json();
   return subscriptions;
 }
 
 // Create a new subscription with user id
-async function createSubscription(userId: string) {
+export async function createSubscription(userId: string) {
   const body = {
     type: 'stream.online',
     version: '1',
@@ -70,7 +70,8 @@ async function createSubscription(userId: string) {
     },
   };
   const response = await callTwitchApi('eventsub/subscriptions', 'POST', JSON.stringify(body));
-  console.log('Create sub status: ', response?.status)
+  const subscriptions: TwitchSubscriptions = await response?.json();
+  return subscriptions.data[0].id;
 }
 
 // Request data matching streamer names

@@ -1,7 +1,6 @@
 import mysql, { ResultSetHeader } from 'mysql2';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
-import { requestStreamerId } from './twitch';
 
 dotenv.config();
 
@@ -14,11 +13,8 @@ const db_connection = mysql.createConnection({
 
 db_connection.connect();
 
-export async function createStreamer(name: string) {
-  const streamerId = await requestStreamerId(name);
-  if (!streamerId) return 'notFound';
-
-  const queryString = `INSERT INTO streamers (id, name, twitch_id) VALUES ("${crypto.randomUUID()}", "${name}", "${streamerId}")`;
+export async function createStreamer(name: string, streamerId: string, subscriptionId: string) {
+  const queryString = `INSERT INTO streamers (id, name, twitch_id, subscription_id) VALUES ("${crypto.randomUUID()}", "${name}", "${streamerId}", "${subscriptionId}")`;
   const result = await db_connection
     .promise()
     .query(queryString)
