@@ -12,11 +12,21 @@ export async function execute(interaction: CommandInteraction) {
   if (!interaction.isChatInputCommand()) return;
   const name: string | null = interaction.options.getString('twitch-name');
   if (name) {
-    const createSuccess = await createStreamer(name);
-    if (createSuccess) {
-      await interaction.reply(`${name} has been added to the announcer.`);
-      return;
+    const createResponse = await createStreamer(name);
+    switch (createResponse) {
+      case 'success': {
+        await interaction.reply(`${name} has been added to the announcer.`);
+        return;
+      }
+      case 'duplicate': {
+        await interaction.reply(`${name} is already part of the announcer.`);
+        return;
+      }
+      case 'notFound': {
+        await interaction.reply(`${name} was not found on Twitch.`);
+        return;
+      }
     }
   }
-  await interaction.reply(`Ooops something went wrong. Double check the Twitch name and if that doesn't help ask Lisa about it.`);
+  await interaction.reply(`Ooops something went wrong. Ask Lisa about it.`);
 }

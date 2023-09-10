@@ -1,5 +1,3 @@
-// TODO: register globally
-// TODO: convert to typescript
 import { REST, Routes } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
