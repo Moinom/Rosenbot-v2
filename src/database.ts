@@ -1,4 +1,4 @@
-import mysql, { ResultSetHeader } from 'mysql2';
+import mysql, { ResultSetHeader, RowDataPacket } from 'mysql2';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 
@@ -42,8 +42,24 @@ export async function deleteStreamer(name: string) {
   }
 }
 
+export async function getSubsriptionIdByStreamerName(name: string) {
+  const queryString = `SELECT subscription_id FROM streamers WHERE name="${name}"`;
+  const result = await db_connection
+    .promise()
+    .query(queryString)
+    .catch((error) => console.error(error));
+  result && console.log('constructor name', result.constructor.name);
+
+  // result[0] is the actual result while result[1] are the fields
+  if (result && result[0]) {
+    const data = result[0] as RowDataPacket[];
+    const subscriptionId: string = data[0].subscription_id;
+    return subscriptionId;
+  }
+}
+
 export function getStreamerNameById(id: string) {
-  const queryString = `SELECT FROM streamers WHERE twitch_id="${id}"`;
+  const queryString = `SELECT name FROM streamers WHERE twitch_id="${id}"`;
   db_connection.query(queryString, (error, result) => {
     if (error) {
       console.error(error);
@@ -55,7 +71,7 @@ export function getStreamerNameById(id: string) {
 }
 
 export function getStreamerIdByName(name: string) {
-  const queryString = `SELECT FROM streamers WHERE name="${name}"`;
+  const queryString = `SELECT twitch_id FROM streamers WHERE name="${name}"`;
   db_connection.query(queryString, (error, result) => {
     if (error) {
       console.error(error);

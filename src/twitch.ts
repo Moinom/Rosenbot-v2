@@ -44,15 +44,22 @@ export async function removeInvalidSubs() {
       (sub.status !== 'enabled' && sub.status !== 'webhook_callback_verification_pending') ||
       sub.transport.callback !== `${TWITCH_CALLBACK_URL}/message`
     ) {
-      const response = await callTwitchApi(`eventsub/subscriptions?id=${sub.id}`, 'DELETE');
-      console.log('Delete status: ', response?.status);
+      removeSubscription(sub.id);
     }
   });
 }
 
+export async function removeSubscription(subscriptionId: string) {
+  const response = await callTwitchApi(`eventsub/subscriptions?id=${subscriptionId}`, 'DELETE');
+  return response?.status === 204;
+}
+
 // Request all subscriptions made with this app
 export async function getSubscriptions(query?: string) {
-  const response = await callTwitchApi(query ? `eventsub/subscriptions?${query}` :'eventsub/subscriptions', 'GET');
+  const response = await callTwitchApi(
+    query ? `eventsub/subscriptions?${query}` : 'eventsub/subscriptions',
+    'GET'
+  );
   const subscriptions: TwitchSubscriptions = await response?.json();
   return subscriptions;
 }
