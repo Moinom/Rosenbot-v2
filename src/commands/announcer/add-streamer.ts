@@ -1,6 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { createStreamer } from '../../database';
-import { createSubscription, getSubscriptions, requestStreamerId } from '../../twitch';
+import { createSubscription, getSubscriptions, requestStreamerInfo } from '../../twitch';
+import { ReplyStatus } from '../../types/discordTypes';
 
 const TWITCH_CALLBACK_URL = process.env.TWITCH_CALLBACK_URL || '';
 export const data = new SlashCommandBuilder()
@@ -11,22 +12,28 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: CommandInteraction) {
+
   if (!interaction.isChatInputCommand()) return;
+
   const name: string | null = interaction.options.getString('twitch-name');
+
+  // There is a 3 second time limit to reply
+  await interaction.reply('Adding streamer ... this may take a few seconds.');
 
   if (name) {
     // Get ID associated with Twitch name
-    const streamerId = await requestStreamerId(name);
-    if (!streamerId) {
-      await interaction.reply(`${name} was not found on Twitch.`);
+    const streamerInfo = await requestStreamerInfo(name);
+    if (!streamerInfo?.id) {
+      await interaction.editReply(selectResponse(name, ReplyStatus.notFound));
       return;
     }
     // Check if subsription for this user already exists
-    const subscriptions = await getSubscriptions(`user_id=${streamerId}`);
+    const subscriptions = await getSubscriptions(`user_id=${streamerInfo.id}`);
     let subscriptionId = '';
-    const userSub = subscriptions.data;
+    const userSub = subscriptions?.data;
 
     if (
+      userSub &&
       userSub.length > 0 &&
       userSub[0].type === 'stream.online' &&
       userSub[0].status === 'enabled' &&
@@ -35,26 +42,39 @@ export async function execute(interaction: CommandInteraction) {
       subscriptionId = subscriptions.data[0].id;
     } else {
       // Subscribe to Twitch channel activity if no subscription yet
-      subscriptionId = await createSubscription(streamerId);
+      subscriptionId = await createSubscription(streamerInfo.id);
     }
 
     if (!subscriptionId) {
-      await interaction.reply(`Subscribing to Twitch channel ${name} failed.`);
+      await interaction.editReply(selectResponse(name, ReplyStatus.failed));
       return;
     }
 
     // Add streamer to database
-    const createResponse = await createStreamer(name, streamerId, subscriptionId);
-    switch (createResponse) {
-      case 'success': {
-        await interaction.reply(`${name} has been added to the announcer.`);
-        return;
-      }
-      case 'duplicate': {
-        await interaction.reply(`${name} is already part of the announcer.`);
-        return;
-      }
+    const createResponse = await createStreamer(streamerInfo.display_name, streamerInfo.id, subscriptionId);
+    await interaction.editReply(selectResponse(name, createResponse));
+    return;
+  }
+  await interaction.editReply(`Ooops something went wrong. Ask Lisa about it.`);
+}
+
+function selectResponse(name: string, status: ReplyStatus) {
+  
+  switch(status) {
+    case ReplyStatus.failed: {
+      return `Creating Twitch streaming event subscription for ${name} failed.`
+    }
+    case ReplyStatus.notFound: {
+      return `${name} was not found on Twitch.`
+    };
+    case ReplyStatus.success: {
+      return `${name} was successfully added to the stream announcer.`
+    };
+    case ReplyStatus.duplicate: {
+      return `${name} is already part of the announcer.`
+    };
+    default: {
+      return `${name} could not be added. Oopsie. Ask Lisa about it.`
     }
   }
-  await interaction.reply(`Ooops something went wrong. Ask Lisa about it.`);
 }

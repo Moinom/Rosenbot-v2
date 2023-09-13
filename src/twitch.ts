@@ -1,26 +1,18 @@
 import {
   Channels,
-  Streamers,
   TwitchRequestParams,
   TwitchSubscriptions,
   TwitchTokenResponse,
 } from './types/twitchTypes';
-import savedStreamers from './streamers.json';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import { ReplyStatus } from './types/discordTypes';
 
 dotenv.config();
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET || '';
 const TWITCH_WEBHOOK_SECRET = process.env.TWITCH_WEBHOOK_SECRET || '';
 const TWITCH_CALLBACK_URL = process.env.TWITCH_CALLBACK_URL || '';
-
-// Subscribe to all streamers on the list
-export async function subscribeAll(streamers: Streamers) {
-  for (let i in streamers) {
-    streamers[i]?.id && createSubscription(streamers[i]!.id);
-  }
-}
 
 // Verify signature received from Twitch message
 export function verifySignature(
@@ -39,7 +31,7 @@ export function verifySignature(
 // Remove subscriptions that failed or lead to an incorrect callback url
 export async function removeInvalidSubs() {
   const subs = await getSubscriptions();
-  subs.data.forEach(async (sub) => {
+  subs?.data.forEach(async (sub) => {
     if (
       (sub.status !== 'enabled' && sub.status !== 'webhook_callback_verification_pending') ||
       sub.transport.callback !== `${TWITCH_CALLBACK_URL}/message`
@@ -51,7 +43,7 @@ export async function removeInvalidSubs() {
 
 export async function removeSubscription(subscriptionId: string) {
   const response = await callTwitchApi(`eventsub/subscriptions?id=${subscriptionId}`, 'DELETE');
-  return response?.status === 204;
+  return response?.status === 204 ? ReplyStatus.success : ReplyStatus.failed;
 }
 
 // Request all subscriptions made with this app
@@ -60,6 +52,8 @@ export async function getSubscriptions(query?: string) {
     query ? `eventsub/subscriptions?${query}` : 'eventsub/subscriptions',
     'GET'
   );
+  if (!response) return;
+
   const subscriptions: TwitchSubscriptions = await response?.json();
   return subscriptions;
 }
@@ -77,41 +71,18 @@ export async function createSubscription(userId: string) {
     },
   };
   const response = await callTwitchApi('eventsub/subscriptions', 'POST', JSON.stringify(body));
-  const subscriptions: TwitchSubscriptions = await response?.json();
-  return subscriptions.data[0].id;
-}
-
-// Request data matching streamer names
-// TODO: pagination
-export async function getStreamerInfo() {
-  const tempStreamers: Streamers = savedStreamers;
-
-  for (let streamer in tempStreamers) {
-    const response = await callTwitchApi(`search/channels?query=${streamer}`, 'GET');
-    let channels: Channels = await response?.json();
-    channels.data.forEach((channel) => {
-      if (channel.display_name.toLowerCase() === streamer.toLowerCase()) {
-        tempStreamers[streamer.toLowerCase()] = {
-          id: channel.id,
-          name: channel.display_name,
-          thumbnailUrl: channel.thumbnail_url,
-          gameName: channel.game_name,
-          streamTitle: channel.title,
-        };
-        return;
-      }
-    });
-  }
-  return tempStreamers;
+  const subscriptions: TwitchSubscriptions | undefined = await response?.json();
+  return subscriptions?.data ? subscriptions?.data[0].id : '';
 }
 
 // Request ID of a single streamer
-export async function requestStreamerId(name: string) {
+export async function requestStreamerInfo(name: string) {
   const response = await callTwitchApi(`search/channels?query=${name}`, 'GET');
-  let channels: Channels = await response?.json();
+  let channels: Channels | undefined = await response?.json();
+  if (!channels) return;
   for (let channel of channels.data) {
     if (channel.display_name.toLowerCase() === name.toLowerCase()) {
-      return channel.id;
+      return channel;
     }
   }
 }
@@ -133,8 +104,8 @@ async function callTwitchApi(path: string, method: string, body?: string) {
     params.headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(url, params).catch((e) => {
-    console.log(e);
+  const response = await fetch(url, params).catch((error) => {
+    console.error(error);
   });
   return response;
 }
@@ -144,8 +115,8 @@ async function getAppAuthToken() {
   const twitchAuthUrl = `https://id.twitch.tv/oauth2/token?client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_CLIENT_SECRET}&grant_type=client_credentials`;
   const response = await fetch(twitchAuthUrl, {
     method: 'POST',
-  }).catch((e) => {
-    console.log(e);
+  }).catch((error) => {
+    console.error(error);
   });
   const authResJson = (await response?.json()) as TwitchTokenResponse;
   return authResJson.access_token;

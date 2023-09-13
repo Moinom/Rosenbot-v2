@@ -1,6 +1,7 @@
 import mysql, { ResultSetHeader, RowDataPacket } from 'mysql2';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import { ReplyStatus } from './types/discordTypes';
 
 dotenv.config();
 
@@ -20,13 +21,13 @@ export async function createStreamer(name: string, streamerId: string, subscript
     .query(queryString)
     .catch((error: Error) => {
       console.error(error);
-      if (error.message.includes('Duplicate')) return 'duplicate';
+      if (error.message.includes('Duplicate')) return ReplyStatus.duplicate;
     });
   if (result && result[0].constructor.name === 'ResultSetHeader') {
     const header = result[0] as ResultSetHeader;
-    if (header.affectedRows > 0) return 'success';
+    if (header.affectedRows > 0) return ReplyStatus.success;
   }
-  return result;
+  return result === ReplyStatus.duplicate ? ReplyStatus.duplicate : ReplyStatus.failed;
 }
 
 export async function deleteStreamer(name: string) {
@@ -37,9 +38,10 @@ export async function deleteStreamer(name: string) {
     .catch((error) => console.error(error));
   if (result && result[0].constructor.name === 'ResultSetHeader') {
     const header = result[0] as ResultSetHeader;
-    if (header.affectedRows > 0) return 'success';
-    if (header.affectedRows === 0) return 'notFound';
+    if (header.affectedRows > 0) return ReplyStatus.success;
+    if (header.affectedRows === 0) return ReplyStatus.notFound;
   }
+  return ReplyStatus.failed;
 }
 
 export async function getSubsriptionIdByStreamerName(name: string) {
@@ -48,36 +50,14 @@ export async function getSubsriptionIdByStreamerName(name: string) {
     .promise()
     .query(queryString)
     .catch((error) => console.error(error));
-  result && console.log('constructor name', result.constructor.name);
 
   // result[0] is the actual result while result[1] are the fields
   if (result && result[0]) {
     const data = result[0] as RowDataPacket[];
+
+    if (data.length === 0) return 'notFound';
+
     const subscriptionId: string = data[0].subscription_id;
     return subscriptionId;
   }
-}
-
-export function getStreamerNameById(id: string) {
-  const queryString = `SELECT name FROM streamers WHERE twitch_id="${id}"`;
-  db_connection.query(queryString, (error, result) => {
-    if (error) {
-      console.error(error);
-      return;
-    }
-    console.log('result', result);
-    return result;
-  });
-}
-
-export function getStreamerIdByName(name: string) {
-  const queryString = `SELECT twitch_id FROM streamers WHERE name="${name}"`;
-  db_connection.query(queryString, (error, result) => {
-    if (error) {
-      console.error(error);
-      return;
-    }
-    console.log('result', result);
-    return result;
-  });
 }
