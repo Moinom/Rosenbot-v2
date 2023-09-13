@@ -1,6 +1,7 @@
 import {
   Channels,
   TwitchRequestParams,
+  TwitchSubscriptionData,
   TwitchSubscriptions,
   TwitchTokenResponse,
 } from './types/twitchTypes';
@@ -85,6 +86,18 @@ export async function requestStreamerInfo(name: string) {
       return channel;
     }
   }
+}
+
+// Check if subscription is valid
+export function isSubscriptionValid(subscription: TwitchSubscriptionData) {
+  if (
+    subscription.type === 'stream.online' &&
+    subscription.status === 'enabled' &&
+    subscription.transport.callback === `${TWITCH_CALLBACK_URL}/message`
+  ) {
+    return true;
+  }
+  return false;
 }
 
 // Generic function for all calls to Twitch API
