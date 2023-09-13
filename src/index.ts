@@ -74,8 +74,6 @@ DISCORD_CLIENT.on('ready', async () => {
   }
   const streamChannel = DISCORD_CLIENT.channels.cache.get(DISCORD_CHANNEL_ID) as TextChannel;
 
-  await removeInvalidSubs();
-
   // Reveive event from webhook in twitch.ts
   eventEmitter.on('stream_start', async (data: TwitchEvent) => {
     const streamerName = data.broadcaster_user_name;

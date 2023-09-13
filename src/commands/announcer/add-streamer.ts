@@ -1,9 +1,13 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { createStreamer } from '../../database';
-import { createSubscription, getSubscriptions, requestStreamerInfo } from '../../twitch';
+import {
+  createSubscription,
+  getSubscriptions,
+  isSubscriptionValid,
+  requestStreamerInfo,
+} from '../../twitch';
 import { ReplyStatus } from '../../types/discordTypes';
 
-const TWITCH_CALLBACK_URL = process.env.TWITCH_CALLBACK_URL || '';
 export const data = new SlashCommandBuilder()
   .setName('add-streamer')
   .setDescription('Add a streamer to the stream announcer.')
@@ -12,7 +16,6 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: CommandInteraction) {
-
   if (!interaction.isChatInputCommand()) return;
 
   const name: string | null = interaction.options.getString('twitch-name');
@@ -32,16 +35,10 @@ export async function execute(interaction: CommandInteraction) {
     let subscriptionId = '';
     const userSub = subscriptions?.data;
 
-    if (
-      userSub &&
-      userSub.length > 0 &&
-      userSub[0].type === 'stream.online' &&
-      userSub[0].status === 'enabled' &&
-      userSub[0].transport.callback === TWITCH_CALLBACK_URL
-    ) {
+    if (userSub && userSub.length && isSubscriptionValid(userSub[0])) {
       subscriptionId = subscriptions.data[0].id;
     } else {
-      // Subscribe to Twitch channel activity if no subscription yet
+      // Subscribe to Twitch channel activity if no valid subscription yet
       subscriptionId = await createSubscription(streamerInfo.id);
     }
 
@@ -51,7 +48,11 @@ export async function execute(interaction: CommandInteraction) {
     }
 
     // Add streamer to database
-    const createResponse = await createStreamer(streamerInfo.display_name, streamerInfo.id, subscriptionId);
+    const createResponse = await createStreamer(
+      streamerInfo.display_name,
+      streamerInfo.id,
+      subscriptionId
+    );
     await interaction.editReply(selectResponse(name, createResponse));
     return;
   }
@@ -59,22 +60,21 @@ export async function execute(interaction: CommandInteraction) {
 }
 
 function selectResponse(name: string, status: ReplyStatus) {
-  
-  switch(status) {
+  switch (status) {
     case ReplyStatus.failed: {
-      return `Creating Twitch streaming event subscription for ${name} failed.`
+      return `Creating Twitch streaming event subscription for ${name} failed.`;
     }
     case ReplyStatus.notFound: {
-      return `${name} was not found on Twitch.`
-    };
+      return `${name} was not found on Twitch.`;
+    }
     case ReplyStatus.success: {
-      return `${name} was successfully added to the stream announcer.`
-    };
+      return `${name} was successfully added to the stream announcer.`;
+    }
     case ReplyStatus.duplicate: {
-      return `${name} is already part of the announcer.`
-    };
+      return `${name} is already part of the announcer.`;
+    }
     default: {
-      return `${name} could not be added. Oopsie. Ask Lisa about it.`
+      return `${name} could not be added. Oopsie. Ask Lisa about it.`;
     }
   }
 }
