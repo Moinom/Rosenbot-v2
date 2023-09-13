@@ -10,21 +10,22 @@ import path from 'path';
 import fs from 'fs';
 import { eventEmitter } from './server';
 import { TwitchEvent } from './types/twitchTypes';
-import { getStreamerInfo, removeInvalidSubs, subscribeAll } from './twitch';
+import { removeInvalidSubs, requestStreamerInfo } from './twitch';
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || '';
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || '';
 const DISCORD_CLIENT = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
-
 DISCORD_CLIENT.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
+// Load slash commands
 for (const folder of commandFolders) {
 	const commandsPath = path.join(foldersPath, folder);
 	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
 	for (const file of commandFiles) {
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
@@ -38,8 +39,8 @@ for (const folder of commandFolders) {
 }
 
 DISCORD_CLIENT.on(Events.InteractionCreate, async (interaction) => {
+  
   if (!interaction.isChatInputCommand()) return;
-
   const command = interaction.client.commands.get(interaction.commandName);
 
   if (!command) {
@@ -72,16 +73,16 @@ DISCORD_CLIENT.on('ready', async () => {
     return;
   }
   const streamChannel = DISCORD_CLIENT.channels.cache.get(DISCORD_CHANNEL_ID) as TextChannel;
-  const streamers = await getStreamerInfo();
 
-  // await removeInvalidSubs();
-  // await subscribeAll(streamers);
+  await removeInvalidSubs();
 
   // Reveive event from webhook in twitch.ts
   eventEmitter.on('stream_start', async (data: TwitchEvent) => {
-    const streamer = streamers[data.broadcaster_user_name.toLowerCase()];
-    if (streamer) {
-      announceStream(streamer.name, streamer.streamTitle, streamer.thumbnailUrl, streamer.gameName);
+    const streamerName = data.broadcaster_user_name;
+    const streamInfo = await requestStreamerInfo(streamerName)
+
+    if (streamInfo) {
+      announceStream(streamInfo.display_name, streamInfo.title, streamInfo.thumbnail_url, streamInfo.game_name);
     }
   });
 
