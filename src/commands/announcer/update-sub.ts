@@ -38,8 +38,8 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
+  // validate and update a single streamer event sub
   if (input) {
-    // Get streamer id from DB
     const streamerId = await getStreamerIdByStreamerName(input);
     if (!streamerId) {
       return selectResponse(input, ReplyStatus.notFound);
@@ -55,13 +55,13 @@ async function updateSub(name: string, streamerId: string) {
   // Check if subsription for this user already exists and is valid
   const subscriptions = await getSubscriptions(`user_id=${streamerId}`);
   const userSub = subscriptions?.data;
+  
   if (userSub && userSub.length > 0) {
     const subValid =  isSubscriptionValid(userSub[0])
     if (subValid) return selectResponse(name, ReplyStatus.duplicate);
     if (!subValid) {
         // Remove invalid sub
-        const removeSubSuccess = await removeSubscription(userSub[0].id)
-        console.log('remove sub', removeSubSuccess)
+        await removeSubscription(userSub[0].id)
     }
 }
   // Subscribe to Twitch channel activity if subscription not valid or existing
