@@ -15,10 +15,11 @@ const db_connection = mysql.createConnection({
 db_connection.connect();
 
 export async function createStreamer(name: string, streamerId: string, subscriptionId: string) {
-  const queryString = `INSERT INTO streamers (id, name, twitch_id, subscription_id) VALUES ("${crypto.randomUUID()}", "${name}", "${streamerId}", "${subscriptionId}")`;
+  const queryString = 'INSERT INTO streamers (id, name, twitch_id, subscription_id) VALUES (?, ?, ?, ?);'
+  const input = [crypto.randomUUID(), name, streamerId, subscriptionId];
   const result = await db_connection
     .promise()
-    .query(queryString)
+    .execute(queryString, input)
     .catch((error: Error) => {
       console.error(error);
       if (error.message.includes('Duplicate')) return ReplyStatus.duplicate;
@@ -31,10 +32,10 @@ export async function createStreamer(name: string, streamerId: string, subscript
 }
 
 export async function deleteStreamer(name: string) {
-  const queryString = `DELETE FROM streamers WHERE name="${name}"`;
+  const queryString = 'DELETE FROM streamers WHERE name = ?';
   const result = await db_connection
     .promise()
-    .query(queryString)
+    .execute(queryString, [name])
     .catch((error) => console.error(error));
   if (result && result[0].constructor.name === 'ResultSetHeader') {
     const header = result[0] as ResultSetHeader;
@@ -45,10 +46,10 @@ export async function deleteStreamer(name: string) {
 }
 
 export async function getSubsriptionIdByStreamerName(name: string) {
-  const queryString = `SELECT subscription_id FROM streamers WHERE name="${name}"`;
+  const queryString = 'SELECT subscription_id FROM streamers WHERE name = ?';
   const result = await db_connection
     .promise()
-    .query(queryString)
+    .execute(queryString, [name])
     .catch((error) => console.error(error));
 
   // result[0] is the actual result while result[1] are the fields
@@ -63,10 +64,10 @@ export async function getSubsriptionIdByStreamerName(name: string) {
 }
 
 export async function getStreamerIdByStreamerName(name: string) {
-  const queryString = `SELECT twitch_id FROM streamers WHERE name="${name}"`;
+  const queryString = 'SELECT twitch_id FROM streamers WHERE name = ?';
   const result = await db_connection
     .promise()
-    .query(queryString)
+    .execute(queryString, [name])
     .catch((error) => console.error(error));
 
   // result[0] is the actual result while result[1] are the fields
@@ -81,10 +82,11 @@ export async function getStreamerIdByStreamerName(name: string) {
 }
 
 export async function updateSubscriptionIdByName(name: string, subscriptionId: string) {
-  const queryString = `UPDATE streamers SET subscription_id = "${subscriptionId}" WHERE name = "${name}"`;
+  const queryString = 'UPDATE streamers SET subscription_id = ? WHERE name = ?';
+  const input = [subscriptionId, name];
   const result = await db_connection
     .promise()
-    .query(queryString)
+    .execute(queryString, input)
     .catch((error) => {
       console.error(error);
       if (error.message.includes('Duplicate')) return ReplyStatus.duplicate;
@@ -98,10 +100,10 @@ export async function updateSubscriptionIdByName(name: string, subscriptionId: s
 }
 
 export async function getAllStreamerIds() {
-  const queryString = `SELECT name, twitch_id FROM streamers`;
+  const queryString = 'SELECT name, twitch_id FROM streamers';
   const result = await db_connection
     .promise()
-    .query(queryString)
+    .execute(queryString)
     .catch((error) => console.error(error));
   // result[0] is the actual result while result[1] are the fields
   if (result && result[0]) {
@@ -113,10 +115,10 @@ export async function getAllStreamerIds() {
 }
 
 export async function getAllStreamerNames() {
-  const queryString = `SELECT name FROM streamers`;
+  const queryString = 'SELECT name FROM streamers';
   const result = await db_connection
     .promise()
-    .query(queryString)
+    .execute(queryString)
     .catch((error) => console.error(error));
   // result[0] is the actual result while result[1] are the fields
   if (result && result[0]) {
