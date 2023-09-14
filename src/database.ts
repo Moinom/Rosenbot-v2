@@ -111,3 +111,18 @@ export async function getAllStreamerIds() {
   }
   return ReplyStatus.failed;
 }
+
+export async function getAllStreamerNames() {
+  const queryString = `SELECT name FROM streamers`;
+  const result = await db_connection
+    .promise()
+    .query(queryString)
+    .catch((error) => console.error(error));
+  // result[0] is the actual result while result[1] are the fields
+  if (result && result[0]) {
+    const data = result[0] as RowDataPacket[];
+    if (data.length === 0) return ReplyStatus.notFound;
+    return data.map(streamer => streamer.name);
+  }
+  return ReplyStatus.failed;
+}
