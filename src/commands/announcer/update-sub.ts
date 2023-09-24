@@ -5,7 +5,7 @@ import {
   getAllStreamerIds,
   getStreamerIdByStreamerName,
   updateSubscriptionIdByName,
-} from '../../database';
+} from '../../database/announcer-db';
 
 export const data = new SlashCommandBuilder()
   .setName('update-sub')

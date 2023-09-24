@@ -1,21 +1,11 @@
-import mysql, { ResultSetHeader, RowDataPacket } from 'mysql2';
-import dotenv from 'dotenv';
+import { ResultSetHeader, RowDataPacket } from 'mysql2';
+import { ReplyStatus } from '../types/discordTypes';
+import { db_connection } from './database';
 import crypto from 'crypto';
-import { ReplyStatus } from './types/discordTypes';
-
-dotenv.config();
-
-const db_connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
-
-db_connection.connect();
 
 export async function createStreamer(name: string, streamerId: string, subscriptionId: string) {
-  const queryString = 'INSERT INTO streamers (id, name, twitch_id, subscription_id) VALUES (?, ?, ?, ?);'
+  const queryString =
+    'INSERT INTO streamers (id, name, twitch_id, subscription_id) VALUES (?, ?, ?, ?);';
   const input = [crypto.randomUUID(), name, streamerId, subscriptionId];
   const result = await db_connection
     .promise()
@@ -109,7 +99,7 @@ export async function getAllStreamerIds() {
   if (result && result[0]) {
     const data = result[0] as RowDataPacket[];
     if (data.length === 0) return ReplyStatus.notFound;
-    return data.map(streamer => [streamer.twitch_id, streamer.name]);
+    return data.map((streamer) => [streamer.twitch_id, streamer.name]);
   }
   return ReplyStatus.failed;
 }
@@ -124,7 +114,7 @@ export async function getAllStreamerNames() {
   if (result && result[0]) {
     const data = result[0] as RowDataPacket[];
     if (data.length === 0) return ReplyStatus.notFound;
-    return data.map(streamer => streamer.name);
+    return data.map((streamer) => streamer.name);
   }
   return ReplyStatus.failed;
 }
