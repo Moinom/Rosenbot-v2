@@ -14,7 +14,7 @@ import { requestStreamerInfo } from './twitch';
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || '';
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || '';
-const DISCORD_CLIENT = new Client({
+export const DISCORD_CLIENT = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
 DISCORD_CLIENT.commands = new Collection();
