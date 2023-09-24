@@ -10,7 +10,7 @@ import path from 'path';
 import fs from 'fs';
 import { eventEmitter } from './server';
 import { TwitchEvent } from './types/twitchTypes';
-import { removeInvalidSubs, requestStreamerInfo } from './twitch';
+import { requestStreamerInfo } from './twitch';
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || '';
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || '';

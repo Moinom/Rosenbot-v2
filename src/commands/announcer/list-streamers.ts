@@ -1,10 +1,10 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { getAllStreamerNames } from '../../database';
+import { getAllStreamerNames } from '../../database/announcer-db';
 import { ReplyStatus } from '../../types/discordTypes';
 
 export const data = new SlashCommandBuilder()
   .setName('list-streamers')
-  .setDescription('List all streamers.')
+  .setDescription('List all registered streamers.')
 
 export async function execute(interaction: CommandInteraction) {
   if (!interaction.isChatInputCommand()) return;

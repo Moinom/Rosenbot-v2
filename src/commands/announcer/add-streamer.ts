@@ -1,5 +1,5 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { createStreamer } from '../../database';
+import { createStreamer } from '../../database/announcer-db';
 import {
   createSubscription,
   getSubscriptions,
