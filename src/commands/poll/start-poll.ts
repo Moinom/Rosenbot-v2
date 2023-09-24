@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder, Embed } from 'discord.js';
+import { CommandInteraction, SlashCommandBuilder, MessageReaction, User } from 'discord.js';
 import { getPoll } from '../../database/poll-db';
 import { ReplyStatus, pollReacts } from '../../types/discordTypes';
 
@@ -25,8 +25,9 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   // Send poll embed
+  const validReacts = pollReacts.slice(0, poll.pollOptions.length);
   const message = await interaction.reply({
-    content: 'A new poll started! Vote on this pole:',
+    content: 'A new poll started! Vote on this poll:',
     fetchReply: true,
     embeds: [
       {
@@ -36,14 +37,52 @@ export async function execute(interaction: CommandInteraction) {
           icon_url: interaction.user.avatarURL() || undefined,
         },
         title: name,
-        description: poll.pollOptions
-          .map((option, index) => `${pollReacts[index]} ${option}`)
-          .join('\n'),
+        description: `This poll will be open for ${
+          poll.openTime
+        } hours. Make sure to vote in time!\n\n${poll.pollOptions
+          .map((option, index) => `${validReacts[index]} ${option}`)
+          .join('\n')}`,
       },
     ],
   });
 
-  // React with available remojis
+  // Collect reactions
+  const timeInMilliseconds = poll.openTime * 60 * 60 * 1000;
+
+  const collectorFilter = (reaction: MessageReaction) => {
+    const emoji = reaction.emoji.name || '';
+    return validReacts.includes(emoji);
+  };
+
+  const collector = message.createReactionCollector({ filter: collectorFilter, time: timeInMilliseconds });
+
+  collector.on('end', (collected) => {
+    // announce result
+    const totalVoteAmount = collected.reduce((a, b) => a + (b.count - 1), 0);
+
+    message.reply({
+      content: `This poll ended. See the results:`,
+      embeds: [
+        {
+          color: 3447003,
+          title: name,
+          description: `Total number of votes cast: ${totalVoteAmount}\n\n${poll.pollOptions
+            .map((option, index) => {
+              let emoji = validReacts[index];
+              let react = collected.get(emoji);
+              let count = react ? react.count - 1 : 0;
+              return `${emoji} ${option}:\t\t${count} ${
+                count === 1 ? 'vote' : 'votes'
+              } ⇒ ${Math.round((count / totalVoteAmount) * 100)}%`;
+            })
+            .join('\n')}`,
+        },
+      ],
+    });
+    // remove poll from DB
+  });
+
+  //React with available remojis
   try {
     for (let i = 0; i < poll.pollOptions.length; i++) {
       await message.react(pollReacts[i]);
