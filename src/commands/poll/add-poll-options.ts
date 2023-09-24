@@ -1,12 +1,12 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { createPoll, createPollOption } from '../../database/poll-db';
+import { createPollOption } from '../../database/poll-db';
 import { ReplyStatus } from '../../types/discordTypes';
 
 export const data = new SlashCommandBuilder()
   .setName('add-poll-options')
   .setDescription('Add options to a poll')
   .addStringOption((option) =>
-    option.setName('poll-name').setDescription('The polls title.').setRequired(true)
+    option.setName('poll-name').setDescription('The poll title.').setRequired(true)
   )
   .addStringOption((option) =>
     option
@@ -42,7 +42,7 @@ export async function execute(interaction: CommandInteraction) {
     return;
   } else if (responses.some((response) => ReplyStatus.failed === response)) {
     await interaction.editReply(
-      'Some options could not be added. You can use the "show-poll" slash command to check what was added.'
+      `Some options could not be added. Make sure the poll you're adding to exists. You can use the "/show-poll" command to check the poll.`
     );
     return;
   }

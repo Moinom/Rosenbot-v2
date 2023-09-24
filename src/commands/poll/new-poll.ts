@@ -6,7 +6,7 @@ export const data = new SlashCommandBuilder()
   .setName('new-poll')
   .setDescription('Create a new poll.')
   .addStringOption((option) =>
-    option.setName('poll-name').setDescription('The polls title.').setRequired(true)
+    option.setName('poll-name').setDescription('The poll title.').setRequired(true)
   )
   .addIntegerOption((option) =>
     option.setName('open-time').setDescription('Time the poll will be open (in hours).').setRequired(false)
