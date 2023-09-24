@@ -15,7 +15,7 @@ import { requestStreamerInfo } from './twitch';
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || '';
 const DISCORD_CHANNEL_ID = process.env.DISCORD_CHANNEL_ID || '';
 export const DISCORD_CLIENT = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions],
 });
 DISCORD_CLIENT.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
