@@ -37,6 +37,23 @@ export async function createPollOption(name: string, pollName: string) {
   return result === ReplyStatus.duplicate ? ReplyStatus.duplicate : ReplyStatus.failed;
 }
 
+export async function getAllPolls() {
+  const queryString = 'SELECT name FROM polls';
+const result = await db_connection
+  .promise()
+  .execute(queryString)
+  .catch((error: Error) => {
+    console.error(error);
+  });
+// result[0] is the actual result while result[1] are the fields
+if (result && result[0]) {
+  const data = result[0] as RowDataPacket[];
+  if (data.length === 0) return ReplyStatus.notFound;
+  return data;
+}
+return ReplyStatus.failed;
+}
+
 export async function getPoll(name: string) {
   const queryString =
     'SELECT polls.name, polls.open_time, poll_options.poll_option FROM polls INNER JOIN poll_options ON polls.name = poll_options.poll_name AND polls.name = ?';
