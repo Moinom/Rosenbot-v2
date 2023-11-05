@@ -53,12 +53,47 @@ export async function getPoll(name: string) {
     const data = result[0] as RowDataPacket[];
     if (data.length === 0) return ReplyStatus.notFound;
     const pollData: PollData = {
-        name: data[0].name,
-        openTime: data[0].open_time,
-        pollOptions: []
-    }
-    data.forEach(poll => pollData.pollOptions.push(poll.poll_option))
+      name: data[0].name,
+      openTime: data[0].open_time,
+      pollOptions: [],
+    };
+    data.forEach((poll) => pollData.pollOptions.push(poll.poll_option));
     return pollData;
+  }
+  return ReplyStatus.failed;
+}
+
+async function deletePollOptions(poll_name: string) {
+  const queryString = 'DELETE FROM poll_options WHERE poll_name = ?';
+
+  const result = await db_connection
+    .promise()
+    .execute(queryString, [poll_name])
+    .catch((error) => console.error(error));
+  if (result && result[0].constructor.name === 'ResultSetHeader') {
+    const header = result[0] as ResultSetHeader;
+    if (header.affectedRows > 0) return ReplyStatus.success;
+    if (header.affectedRows === 0) return ReplyStatus.notFound;
+  }
+  return ReplyStatus.failed;
+}
+
+export async function deletePoll(name: string) {
+  const pollOptionsDeleteStatus = await deletePollOptions(name);
+  if (pollOptionsDeleteStatus === ReplyStatus.failed) {
+    return pollOptionsDeleteStatus;
+  }
+
+  const queryString = 'DELETE FROM polls WHERE name = ?';
+
+  const result = await db_connection
+    .promise()
+    .execute(queryString, [name])
+    .catch((error) => console.error(error));
+  if (result && result[0].constructor.name === 'ResultSetHeader') {
+    const header = result[0] as ResultSetHeader;
+    if (header.affectedRows > 0) return ReplyStatus.success;
+    if (header.affectedRows === 0) return ReplyStatus.notFound;
   }
   return ReplyStatus.failed;
 }
