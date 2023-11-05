@@ -11,6 +11,10 @@ export interface PollData {
   pollOptions: string[];
 }
 
+export interface PollNamesData {
+  name: string;
+}
+
 export const pollReacts = [
   '1️⃣',
   '2️⃣',
