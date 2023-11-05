@@ -54,7 +54,10 @@ export async function execute(interaction: CommandInteraction) {
     return validReacts.includes(emoji);
   };
 
-  const collector = message.createReactionCollector({ filter: collectorFilter, time: timeInMilliseconds });
+  const collector = message.createReactionCollector({
+    filter: collectorFilter,
+    time: timeInMilliseconds,
+  });
 
   collector.on('end', (collected) => {
     // announce result
@@ -71,15 +74,14 @@ export async function execute(interaction: CommandInteraction) {
               let emoji = validReacts[index];
               let react = collected.get(emoji);
               let count = react ? react.count - 1 : 0;
-              return `${emoji} ${option}:\t\t${count} ${
-                count === 1 ? 'vote' : 'votes'
-              } ⇒ ${Math.round((count / totalVoteAmount) * 100)}%`;
+              return `${emoji} ${option}:\t\t${count} ${count === 1 ? 'vote' : 'votes'} ⇒ ${
+                totalVoteAmount > 0 ? Math.round((count / totalVoteAmount) * 100) : 0
+              }%`;
             })
             .join('\n')}`,
         },
       ],
     });
-    // remove poll from DB
   });
 
   //React with available remojis
