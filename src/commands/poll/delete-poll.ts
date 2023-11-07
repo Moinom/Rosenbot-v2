@@ -1,5 +1,5 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { deletePoll } from '../../database/poll-db';
+import { deletePoll, verifyDeletePermission } from '../../database/poll-db';
 import { ReplyStatus } from '../../types/discordTypes';
 
 export const data = new SlashCommandBuilder()
@@ -12,14 +12,27 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: CommandInteraction) {
   if (!interaction.isChatInputCommand()) return;
   const name: string | null = interaction.options.getString('poll-name');
+  const userDiscordId = interaction.user.id;
+  const guildOwner = interaction.guild?.ownerId;
+
+  await interaction.reply('Deletion started...');
 
   if (!name) {
-    await interaction.reply('Error: No poll name provided.');
+    await interaction.editReply('Error: No poll name provided.');
+    return;
+  }
+
+  const hasPermission = await verifyDeletePermission(userDiscordId, name, guildOwner);
+
+  if (!hasPermission) {
+    await interaction.editReply(
+      "You don't have permission to delete this poll. Only the poll creator or an admin can delete a poll."
+    );
     return;
   }
 
   const poll = await deletePoll(name);
-  await interaction.reply(selectResponse(name, poll));
+  await interaction.editReply(selectResponse(name, poll));
   return;
 }
 

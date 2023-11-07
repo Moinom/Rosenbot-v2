@@ -9,6 +9,7 @@ export interface PollData {
   name: string;
   openTime: number;
   pollOptions: string[];
+  creatorDiscordId: string;
 }
 
 export interface PollNamesData {
