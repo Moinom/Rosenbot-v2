@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder, MessageReaction, User } from 'discord.js';
+import { CommandInteraction, SlashCommandBuilder, MessageReaction } from 'discord.js';
 import { getPoll } from '../../database/poll-db';
 import { ReplyStatus, pollReacts } from '../../types/discordTypes';
 
@@ -47,7 +47,7 @@ export async function execute(interaction: CommandInteraction) {
   });
 
   // Collect reactions
-  const timeInMilliseconds = poll.openTime * 60 * 60 * 1000;
+  const timeInMilliseconds = 5000//poll.openTime * 60 * 60 * 1000;
 
   const collectorFilter = (reaction: MessageReaction) => {
     const emoji = reaction.emoji.name || '';
