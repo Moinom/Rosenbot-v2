@@ -1,5 +1,5 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { createPoll, createPollOption } from '../../database/poll-db';
+import { createPoll, createPollOption, deletePoll } from '../../database/poll-db';
 import { ReplyStatus } from '../../types/discordTypes';
 
 export const data = new SlashCommandBuilder()
@@ -30,7 +30,8 @@ export async function execute(interaction: CommandInteraction) {
   const openHours: number = interaction.options.getInteger('open-time') || defaultOpenHours;
   const optionsString: string = interaction.options.getString('poll-options') || '';
   const options = optionsString.split(',');
-
+  const userDiscordId = interaction.user.id;
+  
   if (!name) {
     await interaction.reply('Error: No poll name provided.');
     return;
@@ -39,7 +40,7 @@ export async function execute(interaction: CommandInteraction) {
   await interaction.reply('Creating poll... this may take a few seconds.');
 
   // Create new poll
-  const newPollResponse = await createPoll(name, openHours);
+  const newPollResponse = await createPoll(name, openHours, userDiscordId);
   const newPollStatusReply = selectResponse(name, openHours, newPollResponse);
 
   if (newPollResponse === ReplyStatus.failed) {
@@ -58,7 +59,7 @@ export async function execute(interaction: CommandInteraction) {
   const pollOptionsStatus = evalPollOptionsSuccess(pollOptionsResponses);
   if (pollOptionsStatus === ReplyStatus.failed) {
     await interaction.editReply("Creating poll options failed. Try again or ask Lisa what's up");
-    // Delete poll again
+    await deletePoll(name);
     return;
   }
 

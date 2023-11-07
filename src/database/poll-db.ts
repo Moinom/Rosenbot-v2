@@ -3,9 +3,9 @@ import { PollData, ReplyStatus } from '../types/discordTypes';
 import { db_connection } from './database';
 import crypto from 'crypto';
 
-export async function createPoll(name: string, openTime: number) {
-  const queryString = 'INSERT INTO polls (id, name, open_time) VALUES (?, ?, ?);';
-  const input = [crypto.randomUUID(), name, openTime];
+export async function createPoll(name: string, openTime: number, userDiscordId: string) {
+  const queryString = 'INSERT INTO polls (id, name, open_time, creator_discord_id) VALUES (?, ?, ?, ?);';
+  const input = [crypto.randomUUID(), name, openTime, userDiscordId];
   const result = await db_connection
     .promise()
     .execute(queryString, input)
@@ -56,7 +56,7 @@ return ReplyStatus.failed;
 
 export async function getPoll(name: string) {
   const queryString =
-    'SELECT polls.name, polls.open_time, poll_options.poll_option FROM polls INNER JOIN poll_options ON polls.name = poll_options.poll_name AND polls.name = ?';
+    'SELECT polls.name, polls.open_time, polls.creator_discord_id, poll_options.poll_option FROM polls INNER JOIN poll_options ON polls.name = poll_options.poll_name AND polls.name = ?';
   const input = [name];
   const result = await db_connection
     .promise()

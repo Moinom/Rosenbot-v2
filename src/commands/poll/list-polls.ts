@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder, MessageReaction, User } from 'discord.js';
+import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { getAllPolls } from '../../database/poll-db';
 import { ReplyStatus } from '../../types/discordTypes';
 
