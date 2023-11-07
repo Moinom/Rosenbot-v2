@@ -73,6 +73,7 @@ export async function getPoll(name: string) {
       name: data[0].name,
       openTime: data[0].open_time,
       pollOptions: [],
+      creatorDiscordId: data[0].creator_discord_id
     };
     data.forEach((poll) => pollData.pollOptions.push(poll.poll_option));
     return pollData;
@@ -113,4 +114,17 @@ export async function deletePoll(name: string) {
     if (header.affectedRows === 0) return ReplyStatus.notFound;
   }
   return ReplyStatus.failed;
+}
+
+export async function verifyDeletePermission(discordId: string, pollName: string, guildOwner?: string) {
+  const poll = await getPoll(pollName);
+  if (poll !== ReplyStatus.failed && poll !== ReplyStatus.notFound) {
+    if (
+      poll.creatorDiscordId === discordId ||
+      (guildOwner && guildOwner === discordId)
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
