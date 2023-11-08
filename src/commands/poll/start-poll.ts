@@ -2,6 +2,8 @@ import { CommandInteraction, SlashCommandBuilder, MessageReaction } from 'discor
 import { getPoll } from '../../database/poll-db';
 import { ReplyStatus, pollReacts } from '../../types/discordTypes';
 
+type WinnerOptions = { option: string; voters: (string | null)[] };
+
 export const data = new SlashCommandBuilder()
   .setName('start-poll')
   .setDescription('Start a created poll.')
@@ -47,7 +49,7 @@ export async function execute(interaction: CommandInteraction) {
   });
 
   // Collect reactions
-  const timeInMilliseconds = 5000//poll.openTime * 60 * 60 * 1000;
+  const timeInMilliseconds = 5000; //poll.openTime * 60 * 60 * 1000;
 
   const collectorFilter = (reaction: MessageReaction) => {
     const emoji = reaction.emoji.name || '';
@@ -59,26 +61,79 @@ export async function execute(interaction: CommandInteraction) {
     time: timeInMilliseconds,
   });
 
-  collector.on('end', (collected) => {
+  collector.on('end', async (collected) => {
     // announce result
-    const totalVoteAmount = collected.reduce((a, b) => a + (b.count - 1), 0);
+    let totalVoteAmount = 0; //collected.reduce((a, b) => a + (b.count - 1), 0);
+    let winnerOptions: WinnerOptions[] = [];
+    let highestCount = 0;
+
+    for (let i = 0; i < poll.pollOptions.length; i++) {
+      const option = poll.pollOptions[i];
+      const emoji = validReacts[i];
+      let react = collected.get(emoji);
+      let count = react ? react.count - 1 : 0;
+      totalVoteAmount += count;
+
+      if (count && count === highestCount) {
+        highestCount = count;
+        winnerOptions.push({
+          option: option,
+          voters: (await react?.users.fetch())?.map((user) => (!user.bot ? user.id : null)) || [],
+        });
+      }
+
+      if (count > highestCount) {
+        highestCount = count;
+        winnerOptions = [
+          {
+            option: option,
+            voters: (await react?.users.fetch())?.map((user) => (!user.bot ? user.id : null)) || [],
+          },
+        ];
+      }
+    }
+    console.log(winnerOptions);
+
+    const voteAnalysis = `Total number of votes cast: ${totalVoteAmount}\n\n${poll.pollOptions
+      .map((option, index) => {
+        let emoji = validReacts[index];
+        let react = collected.get(emoji);
+        let count = react ? react.count - 1 : 0;
+
+        return `${emoji} ${option}:\t\t${count} ${count === 1 ? 'vote' : 'votes'} ⇒ ${
+          totalVoteAmount > 0 ? Math.round((count / totalVoteAmount) * 100) : 0
+        }%`;
+      })
+      .join('\n')}`;
+
+    let winnersText = '';
+    let winnerPings = [
+      ...new Set(
+        winnerOptions.map((options) =>
+          options.voters
+            .filter((voter) => voter)
+            .map((voter) => (voter ? `<@${voter}>` : ''))
+            .join(', ')
+        )
+      ),
+    ].join(', ');
+    if (winnerOptions.length > 1) {
+      winnersText = `There was a draw. The winning options are: **${[
+        ...winnerOptions.map((option) => option.option),
+      ].join(', ')}**.\n${winnerPings}  you voted for the winner! See the results:`;
+    } else if (winnerOptions.length === 1) {
+      winnersText = `The winning option is: **${winnerOptions[0].option}**.\n${winnerPings} you voted for the winner! See the results:`;
+    } else {
+      winnersText = 'Looks like nobody voted :rage:';
+    }
 
     message.reply({
-      content: `This poll ended. See the results:`,
+      content: `This poll ended. ${winnersText}`,
       embeds: [
         {
           color: 3447003,
           title: name,
-          description: `Total number of votes cast: ${totalVoteAmount}\n\n${poll.pollOptions
-            .map((option, index) => {
-              let emoji = validReacts[index];
-              let react = collected.get(emoji);
-              let count = react ? react.count - 1 : 0;
-              return `${emoji} ${option}:\t\t${count} ${count === 1 ? 'vote' : 'votes'} ⇒ ${
-                totalVoteAmount > 0 ? Math.round((count / totalVoteAmount) * 100) : 0
-              }%`;
-            })
-            .join('\n')}`,
+          description: voteAnalysis,
         },
       ],
     });
