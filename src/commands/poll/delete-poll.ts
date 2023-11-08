@@ -26,7 +26,7 @@ export async function execute(interaction: CommandInteraction) {
 
   if (!hasPermission) {
     await interaction.editReply(
-      "You don't have permission to delete this poll. Only the poll creator or an admin can delete a poll."
+      "You don't have permission to delete this poll. Only the poll creator or the server owner can delete a poll."
     );
     return;
   }
