@@ -58,7 +58,7 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   // Collect reactions
-  const timeInMilliseconds = 5000; //poll.openTime * 60 * 60 * 1000;
+  const timeInMilliseconds = poll.openTime * 60 * 60 * 1000;
 
   const collectorFilter = (reaction: MessageReaction) => {
     const emoji = reaction.emoji.name || '';
