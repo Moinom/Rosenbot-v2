@@ -48,6 +48,15 @@ export async function execute(interaction: CommandInteraction) {
     ],
   });
 
+  // Bot reacts with available remojis
+  try {
+    for (let i = 0; i < poll.pollOptions.length; i++) {
+      await message.react(pollReacts[i]);
+    }
+  } catch (error) {
+    console.error('One of the emojis failed to react:', error);
+  }
+
   // Collect reactions
   const timeInMilliseconds = 5000; //poll.openTime * 60 * 60 * 1000;
 
@@ -61,52 +70,45 @@ export async function execute(interaction: CommandInteraction) {
     time: timeInMilliseconds,
   });
 
+  // Poll timer ended
   collector.on('end', async (collected) => {
-    // announce result
-    let totalVoteAmount = 0; //collected.reduce((a, b) => a + (b.count - 1), 0);
+    let totalVoteAmount = collected.reduce((a, b) => a + (b.count - 1), 0);
     let winnerOptions: WinnerOptions[] = [];
     let highestCount = 0;
+    let voteAnalysis = `Total number of votes cast: ${totalVoteAmount}\n\n`;
 
+    // Analyze poll results and write bot embed response
     for (let i = 0; i < poll.pollOptions.length; i++) {
       const option = poll.pollOptions[i];
       const emoji = validReacts[i];
       let react = collected.get(emoji);
       let count = react ? react.count - 1 : 0;
-      totalVoteAmount += count;
 
-      if (count && count === highestCount) {
-        highestCount = count;
-        winnerOptions.push({
-          option: option,
-          voters: (await react?.users.fetch())?.map((user) => (!user.bot ? user.id : null)) || [],
-        });
+      voteAnalysis += `${emoji} ${option}:\t\t${count} ${count === 1 ? 'vote' : 'votes'} ⇒ ${
+        totalVoteAmount > 0 ? Math.round((count / totalVoteAmount) * 100) : 0
+      }%\n`;
+
+      if (!count || count < highestCount) {
+        continue;
+      }
+
+      highestCount = count;
+      const winnerInfo = {
+        option: option,
+        voters: await extractUserIds(react),
+      };
+
+      if (count === highestCount) {
+        winnerOptions.push(winnerInfo);
       }
 
       if (count > highestCount) {
-        highestCount = count;
-        winnerOptions = [
-          {
-            option: option,
-            voters: (await react?.users.fetch())?.map((user) => (!user.bot ? user.id : null)) || [],
-          },
-        ];
+        winnerOptions = [winnerInfo];
       }
     }
-    console.log(winnerOptions);
 
-    const voteAnalysis = `Total number of votes cast: ${totalVoteAmount}\n\n${poll.pollOptions
-      .map((option, index) => {
-        let emoji = validReacts[index];
-        let react = collected.get(emoji);
-        let count = react ? react.count - 1 : 0;
-
-        return `${emoji} ${option}:\t\t${count} ${count === 1 ? 'vote' : 'votes'} ⇒ ${
-          totalVoteAmount > 0 ? Math.round((count / totalVoteAmount) * 100) : 0
-        }%`;
-      })
-      .join('\n')}`;
-
-    let winnersText = '';
+    // Format winner user ids for ping
+    let pollEndAnnouncement = '';
     let winnerPings = [
       ...new Set(
         winnerOptions.map((options) =>
@@ -117,18 +119,21 @@ export async function execute(interaction: CommandInteraction) {
         )
       ),
     ].join(', ');
+
+    // Write end poll announcement
     if (winnerOptions.length > 1) {
-      winnersText = `There was a draw. The winning options are: **${[
+      pollEndAnnouncement = `There was a draw. The winning options are: **${[
         ...winnerOptions.map((option) => option.option),
       ].join(', ')}**.\n${winnerPings}  you voted for the winner! See the results:`;
     } else if (winnerOptions.length === 1) {
-      winnersText = `The winning option is: **${winnerOptions[0].option}**.\n${winnerPings} you voted for the winner! See the results:`;
+      pollEndAnnouncement = `The winning option is: **${winnerOptions[0].option}**.\n${winnerPings} you voted for the winner! See the results:`;
     } else {
-      winnersText = 'Looks like nobody voted :rage:';
+      pollEndAnnouncement = 'Looks like nobody voted :rage:';
     }
 
+    // Announce results as reply to original poll
     message.reply({
-      content: `This poll ended. ${winnersText}`,
+      content: `This poll ended. ${pollEndAnnouncement}`,
       embeds: [
         {
           color: 3447003,
@@ -138,15 +143,6 @@ export async function execute(interaction: CommandInteraction) {
       ],
     });
   });
-
-  //React with available remojis
-  try {
-    for (let i = 0; i < poll.pollOptions.length; i++) {
-      await message.react(pollReacts[i]);
-    }
-  } catch (error) {
-    console.error('One of the emojis failed to react:', error);
-  }
 }
 
 function selectResponse(name: string, status: ReplyStatus) {
@@ -161,4 +157,12 @@ function selectResponse(name: string, status: ReplyStatus) {
       return `Something weird happened with "${name}". Oopsie. Ask Lisa about it.`;
     }
   }
+}
+
+async function extractUserIds(react?: MessageReaction) {
+  if (!react) {
+    return [];
+  }
+  const users = await react.users.fetch();
+  return users.map((user) => (!user.bot ? user.id : ''));
 }
