@@ -49,13 +49,23 @@ export async function removeSubscription(subscriptionId: string) {
 
 // Request all subscriptions made with this app
 export async function getSubscriptions(query?: string) {
-  const response = await callTwitchApi(
-    query ? `eventsub/subscriptions?${query}` : 'eventsub/subscriptions',
-    'GET'
-  );
-  if (!response) return;
+  const initialQuery = query ? `eventsub/subscriptions?${query}` : 'eventsub/subscriptions';
+  const initialResponse = await callTwitchApi(initialQuery, 'GET');
+  if (!initialResponse) return;
 
-  const subscriptions: TwitchSubscriptions = await response?.json();
+  const subscriptions: TwitchSubscriptions = await initialResponse?.json();
+  let nextPageCursor = subscriptions.pagination.cursor;
+
+  while (nextPageCursor) {
+    const response = await callTwitchApi(
+      `${initialQuery}${query ? '&' : '?'}after=${nextPageCursor}`,
+      'GET'
+    );
+    const nextSub: TwitchSubscriptions = await response?.json();
+    subscriptions.data.push(...nextSub.data);
+    nextPageCursor = nextSub.pagination.cursor;
+  }
+
   return subscriptions;
 }
 
@@ -78,9 +88,20 @@ export async function createSubscription(userId: string) {
 
 // Request ID of a single streamer
 export async function requestStreamerInfo(name: string) {
-  const response = await callTwitchApi(`search/channels?query=${name}`, 'GET');
-  let channels: Channels | undefined = await response?.json();
+  const query = `search/channels?query=${name}`;
+  const initialResponse = await callTwitchApi(query, 'GET');
+  let channels: Channels | undefined = await initialResponse?.json();
   if (!channels) return;
+
+  let nextPageCursor = channels.pagination.cursor;
+
+  while (nextPageCursor) {
+    const response = await callTwitchApi(`${query}&after=${nextPageCursor}`, 'GET');
+    const nextSub: Channels | undefined = await response?.json();
+    nextSub && channels.data.push(...nextSub.data);
+    nextPageCursor = nextSub?.pagination.cursor;
+  }
+
   for (let channel of channels.data) {
     if (channel.display_name.toLowerCase() === name.toLowerCase()) {
       return channel;
