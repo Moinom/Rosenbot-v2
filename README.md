@@ -13,6 +13,11 @@ Create a bot in your Discord profile. Find more info about this [here](https://d
 
 More info [here](https://dev.twitch.tv/docs/authentication).
 
+## Set up a database
+
+I used MySQL, with tables for streamers, polls and poll options. Here is a schema with the setup: \
+![database schema](/src/images/db_schema.png "Database Schema")
+
 ## Install your Discord bot
 
 ### Clone this repository
@@ -76,7 +81,7 @@ To test the webhook connection during local development, it is necessary to use 
 
 ### Local database
 
-For local development, I used the MySQL workbench. See their documentation [here](https://dev.mysql.com/doc/workbench/en/). An architecture diagram of the tables will follow.
+For local development, I used the MySQL workbench. See their documentation [here](https://dev.mysql.com/doc/workbench/en/).
 
 ## Bot commands
 
