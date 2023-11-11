@@ -9,7 +9,7 @@ import {
 import path from 'path';
 import fs from 'fs';
 import { eventEmitter } from './server';
-import { TwitchEvent } from './types/twitchTypes';
+import { TwitchEvent } from './utils/twitchTypes';
 import { requestStreamerInfo } from './twitch';
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || '';

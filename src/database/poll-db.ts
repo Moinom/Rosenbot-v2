@@ -1,5 +1,5 @@
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
-import { PollData, ReplyStatus } from '../types/discordTypes';
+import { PollData, ReplyStatus } from '../utils/discordUtils';
 import { db_connection } from './database';
 import crypto from 'crypto';
 

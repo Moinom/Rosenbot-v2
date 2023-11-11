@@ -1,7 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { deleteStreamer, getSubsriptionIdByStreamerName } from '../../database/announcer-db';
 import { removeSubscription } from '../../twitch';
-import { ReplyStatus } from '../../types/discordTypes';
+import { ReplyStatus } from '../../utils/discordUtils';
 
 export const data = new SlashCommandBuilder()
   .setName('remove-streamer')

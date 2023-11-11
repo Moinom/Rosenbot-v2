@@ -1,6 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder, MessageReaction } from 'discord.js';
 import { getPoll } from '../../database/poll-db';
-import { ReplyStatus, pollReacts } from '../../types/discordTypes';
+import { ReplyStatus, pollReacts } from '../../utils/discordUtils';
 
 type WinnerOptions = { option: string; voters: (string | null)[] };
 

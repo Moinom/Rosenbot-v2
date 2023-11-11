@@ -6,7 +6,7 @@ import {
   isSubscriptionValid,
   requestStreamerInfo,
 } from '../../twitch';
-import { ReplyStatus } from '../../types/discordTypes';
+import { ReplyStatus } from '../../utils/discordUtils';
 
 export const data = new SlashCommandBuilder()
   .setName('add-streamer')

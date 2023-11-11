@@ -1,6 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { getAllPolls } from '../../database/poll-db';
-import { ReplyStatus } from '../../types/discordTypes';
+import { ReplyStatus } from '../../utils/discordUtils';
 
 export const data = new SlashCommandBuilder()
   .setName('list-polls')
