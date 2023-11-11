@@ -1,6 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { createSubscription, getSubscriptions, isSubscriptionValid, removeSubscription } from '../../twitch';
-import { ReplyStatus } from '../../types/discordTypes';
+import { ReplyStatus } from '../../utils/discordUtils';
 import {
   getAllStreamerIds,
   getStreamerIdByStreamerName,

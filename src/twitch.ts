@@ -4,10 +4,10 @@ import {
   TwitchSubscriptionData,
   TwitchSubscriptions,
   TwitchTokenResponse,
-} from './types/twitchTypes';
+} from './utils/twitchTypes';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
-import { ReplyStatus } from './types/discordTypes';
+import { ReplyStatus } from './utils/discordUtils';
 
 dotenv.config();
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID || '';
